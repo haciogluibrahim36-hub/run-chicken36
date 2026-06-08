@@ -1,9 +1,9 @@
 const CACHE_NAME = 'run-chicken-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/splash-logo.png',
-  '/manifest.json'
+  '/run-chicken36/',
+  '/run-chicken36/index.html',
+  '/run-chicken36/manifest.json',
+  '/run-chicken36/app-icon.png'
 ];
 
 // Install - cache core assets
@@ -51,7 +51,7 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => {
         // Offline fallback - return cached index for navigation requests
         if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
+          return caches.match('/run-chicken36/index.html');
         }
       });
     })

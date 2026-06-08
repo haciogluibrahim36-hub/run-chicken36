@@ -2,7 +2,7 @@
   "name": "Run Chicken - Memory Corridor",
   "short_name": "Run Chicken",
   "description": "A hyper-casual memory game where you guide a chicken through dark corridors!",
-  "start_url": "/index.html",
+  "start_url": "/run-chicken36/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#0a0a0f",
@@ -75,5 +75,5 @@
     }
   ],
   "prefer_related_applications": false,
-  "scope": "/"
+  "scope": "/run-chicken36/"
 }
