@@ -1,4 +1,4 @@
-const CACHE_NAME = 'run-chicken-v1';
+const CACHE_NAME = 'run-chicken-v2';
 const ASSETS_TO_CACHE = [
   '/run-chicken36/',
   '/run-chicken36/index.html',
@@ -57,3 +57,58 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Notification click - focus or open the app
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes('/run-chicken36/') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow('/run-chicken36/');
+      }
+    })
+  );
+});
+
+// Periodic background sync - reminder notifications (Chrome on Android)
+const REMINDER_MESSAGES = [
+  { title: '🐔 Your chicken misses you!', body: 'Come back and master more corridors!' },
+  { title: '🥚 Eggs are waiting!', body: 'Hatch new chicks today.' },
+  { title: '🏆 Beat your best level?', body: 'A new challenge awaits!' }
+];
+
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'reminder') {
+    event.waitUntil(showReminder());
+  }
+});
+
+// Push event handler (for future server-side push, optional)
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) {}
+  const msg = REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
+  event.waitUntil(
+    self.registration.showNotification(data.title || msg.title, {
+      body: data.body || msg.body,
+      icon: '/run-chicken36/app-icon.png',
+      badge: '/run-chicken36/app-icon.png',
+      tag: 'run-chicken-reminder'
+    })
+  );
+});
+
+function showReminder() {
+  const msg = REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
+  return self.registration.showNotification(msg.title, {
+    body: msg.body,
+    icon: '/run-chicken36/app-icon.png',
+    badge: '/run-chicken36/app-icon.png',
+    tag: 'run-chicken-reminder'
+  });
+}
