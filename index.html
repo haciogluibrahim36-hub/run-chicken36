@@ -16,11 +16,17 @@
     width: 100%; height: 100%;
     background: #07070b;
     overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Microsoft YaHei", sans-serif;
     color: #f5f5f0;
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    position: fixed;
+    top: 0;
+    left: 0;
   }
   #game {
     position: fixed;
@@ -39,10 +45,10 @@
     padding: 24px;
     pointer-events: none;
     z-index: 10;
-    transition: opacity 0.35s ease;
+    transition: opacity 0.35s ease, visibility 0s linear 0.35s;
   }
-  .overlay.hidden { opacity: 0; pointer-events: none !important; }
-  .overlay.active { pointer-events: auto; }
+  .overlay.hidden { opacity: 0; pointer-events: none !important; visibility: hidden; }
+  .overlay.active { pointer-events: auto; visibility: visible; transition: opacity 0.35s ease, visibility 0s linear 0s; }
 
   .title {
     font-size: clamp(38px, 11vw, 72px);
@@ -811,7 +817,12 @@
   function resize() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth;
-    H = window.innerHeight;
+    // Use visualViewport on mobile if available (handles iOS URL bar properly)
+    if (window.visualViewport) {
+      H = window.visualViewport.height;
+    } else {
+      H = window.innerHeight;
+    }
     canvas.width = Math.floor(W * DPR);
     canvas.height = Math.floor(H * DPR);
     canvas.style.width = W + 'px';
@@ -819,6 +830,12 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
   window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => {
+    setTimeout(resize, 100);
+  });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', resize);
+  }
   resize();
 
   // ============================================================
@@ -2548,6 +2565,22 @@
 
   document.addEventListener('gesturestart', e => e.preventDefault());
   document.addEventListener('dblclick', e => e.preventDefault());
+  // Prevent pull-to-refresh on mobile
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+  // Pause game audio when tab/app goes to background
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (audio.ctx && audio.ctx.state === 'running') {
+        audio.ctx.suspend();
+      }
+    } else {
+      if (audio.ctx && audio.ctx.state === 'suspended') {
+        audio.ctx.resume();
+      }
+    }
+  });
   // resume audio + start ambient music on first interaction anywhere
   ['click', 'touchstart', 'keydown'].forEach(ev => {
     window.addEventListener(ev, () => {
